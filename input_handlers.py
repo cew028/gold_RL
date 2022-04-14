@@ -15,6 +15,8 @@ from actions import (
 )
 import color
 import exceptions
+import render_functions 
+import settings
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -153,7 +155,7 @@ class EventHandler(BaseEventHandler):
 class AskUserEventHandler(EventHandler):
     """Handles user input for actions which require special input."""        
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        """By default any key exist this input handler."""
+        """By default any key exits this input handler."""
         if event.sym in { # Ignore modifier keys.
             tcod.event.K_LSHIFT,
             tcod.event.K_RSHIFT,
@@ -276,7 +278,7 @@ class LevelUpEventHandler(AskUserEventHandler):
             else:
                 player.level.increase_defense()
         else:
-            self.engine.message_log.add_message("Invalid enty.", color.invalid)
+            self.engine.message_log.add_message("Invalid entry.", color.invalid)
             
             return None
         
@@ -591,3 +593,38 @@ class HistoryViewer(EventHandler):
         else: # Any other key moves back to the main game state.
             return MainGameEventHandler(self.engine)
         return None
+
+class CharacterCreator(EventHandler):
+    def __init__(self, engine: Engine):
+        super().__init__(engine)
+    
+    def on_render(self, console: tcod.Console) -> None:
+        super().on_render(console)
+        character_creator_console = tcod.Console(console.width, console.height)
+        character_creator_console.draw_frame(0, 0, character_creator_console.width, character_creator_console.height)
+        character_creator_console.print_box(
+            0, 0, character_creator_console.width, 1, "┤Character Creation├", alignment=tcod.CENTER
+        )
+        
+        character_creator_console.print(2, 2, "Name:")
+        
+        character_creator_console.print(2, 5, "Class:")
+        
+        for i, character_class in enumerate(settings.list_of_classes):
+            class_key = chr(ord("A") + i)
+            
+            class_string = f"[{class_key}] {character_class}"
+            
+            character_creator_console.print(3, 7+i, class_string, fg=color.menu_text)
+        
+        character_creator_console.print(2, 19, "Rolling for stats:")
+        for i, text in enumerate(
+            ["[1] Extreme (Easy)", "[2] Standard (Medium)", "[3] Classic (Hard)"]
+        ):
+            character_creator_console.print(3, 21+i, text, fg=color.menu_text)
+            
+        if settings.player_name == "":
+            settings.player_name = render_functions.ask_for_text(console=character_creator_console, x=8, y=2)
+        else:
+            character_creator_console.print(8, 2, settings.player_name, fg=color.gold)
+        character_creator_console.blit(console, 0, 0,)

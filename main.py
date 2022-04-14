@@ -5,6 +5,7 @@ import tcod
 import color
 import exceptions
 import input_handlers
+import settings
 import setup_game
 
 def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
@@ -14,23 +15,10 @@ def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
         print("Game saved.")
 
 def main() -> None:
-    screen_width = 80
-    screen_height = 50
-
-    tileset = tcod.tileset.load_tilesheet(
-        "tileset.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-    )
-    
     handler: input_handlers.BaseEventHandler = setup_game.MainMenu()
 
-    with tcod.context.new_terminal(
-        screen_width,
-        screen_height,
-        tileset=tileset,
-        title="GOLD",
-        vsync=True,
-    ) as context:
-        root_console = tcod.Console(screen_width, screen_height, order="F")
+    with settings.main_context as context:
+        root_console = tcod.Console(settings.screen_width, settings.screen_height, order="F")
         try:
             while True:
                 root_console.clear()

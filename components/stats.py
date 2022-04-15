@@ -7,12 +7,12 @@ class Stats(BaseComponent):
     
     def __init__(
         self, 
-        charisma: int = 0,
-        constitution: int = 0,
-        dexterity: int = 0,
-        intelligence: int = 0,
-        strength: int = 0,
-        wisdom: int = 0,
+        charisma: int = 10,
+        constitution: int = 10,
+        dexterity: int = 10,
+        intelligence: int = 10,
+        strength: int = 10,
+        wisdom: int = 10,
     ):
         self.charisma = charisma
         self.constitution = constitution

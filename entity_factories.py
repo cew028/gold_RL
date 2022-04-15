@@ -1,3 +1,4 @@
+import color
 import settings
 
 from components.ai import HostileEnemy
@@ -44,6 +45,12 @@ troll = Actor(
     inventory=Inventory(capacity=0),
     level=Level(xp_given=100),
     stats=Stats(),
+)
+
+gold = Item(
+    char="$",
+    color=color.gold,
+    name="Gold piece",
 )
 
 confusion_scroll = Item(

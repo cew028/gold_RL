@@ -4,6 +4,7 @@ import os
 
 from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union
 
+import copy
 import tcod
 
 import actions
@@ -14,9 +15,7 @@ from actions import (
     WaitAction
 )
 import color
-from dice_roller import dice_roller
 import exceptions
-import render_functions 
 import settings
 
 if TYPE_CHECKING:
@@ -359,6 +358,8 @@ class InventoryEventHandler(AskUserEventHandler):
                 
                 if is_equipped:
                     item_string = f"{item_string} (E)"
+                if item.stack > 0:
+                    item_string = f"({item_key}) {item.stack} {item.name}s"
                 
                 console.print(x + 1, y + i + 1, item_string)
         else:
@@ -616,117 +617,3 @@ class HistoryViewer(EventHandler):
             return MainGameEventHandler(self.engine)
         return None
 
-class CharacterCreator(EventHandler):
-    def __init__(self, engine: Engine):
-        super().__init__(engine)
-    
-    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        player = self.engine.player
-        key = event.sym
-        index = key - tcod.event.K_a
-        
-        if 0 <= index < len(settings.list_of_classes) and settings.player_class == "":
-            # Detecting the keypress that selects the player's class.
-            settings.class_number = index
-            settings.player_class = settings.list_of_classes[settings.class_number]
-        elif len(settings.list_of_classes) <= index < len(settings.list_of_classes)+len(settings.list_of_difficulties) and settings.difficulty == "":
-            # Detecting the keypress that selects the player's difficulty level. 
-            # Offset by the number of classes so that alphabetically it picks up where the last list left off.
-            settings.difficulty_number = index - len(settings.list_of_classes)
-            settings.difficulty = settings.list_of_difficulties[settings.difficulty_number]
-        elif(
-            key == tcod.event.K_n 
-            and settings.player_name != "" 
-            and settings.player_class != "" 
-            and settings.difficulty != ""
-        ):
-            # The player has entered their details but then selected "[N]" when asked to confirm their choices.
-            settings.player_name = ""
-            settings.player_class = ""
-            settings.class_number = -1
-            settings.difficulty = ""
-            settings.difficulty_number = -1
-        elif(
-            key == tcod.event.K_y
-            and settings.player_name != "" 
-            and settings.player_class != "" 
-            and settings.difficulty != ""
-        ):
-            # The player has entered their details and selected "[Y]" when asked to confirm their choices.
-            self.engine.message_log.add_message(
-                f"Hello and welcome, {settings.player_name}, to the dungeon.", color.welcome_text
-            )
-            
-            # Rolling for stats.
-            if settings.difficulty_number == 0: # Extreme (Easy)
-                self.engine.player.charisma = dice_roller(3,20,1)
-                self.engine.player.constitution = dice_roller(3,20,1)
-                self.engine.player.dexterity = dice_roller(3,20,1)
-                self.engine.player.intelligence = dice_roller(3,20,1)
-                self.engine.player.strength = dice_roller(3,20,1)
-                self.engine.player.wisdom = dice_roller(3,20,1)
-            elif settings.difficulty_number == 1: # Standard (Medium)
-                self.engine.player.charisma = dice_roller(3,10,2)
-                self.engine.player.constitution = dice_roller(3,10,2)
-                self.engine.player.dexterity = dice_roller(3,10,2)
-                self.engine.player.intelligence = dice_roller(3,10,2)
-                self.engine.player.strength = dice_roller(3,10,2)
-                self.engine.player.wisdom = dice_roller(3,10,2)
-            elif settings.difficulty_number == 2: # Classic (Hard)
-                self.engine.player.charisma = dice_roller(3,6,3)
-                self.engine.player.constitution = dice_roller(3,6,3)
-                self.engine.player.dexterity = dice_roller(3,6,3)
-                self.engine.player.intelligence = dice_roller(3,6,3)
-                self.engine.player.strength = dice_roller(3,6,3)
-                self.engine.player.wisdom = dice_roller(3,6,3)
-            
-            return MainGameEventHandler(self.engine) 
-        return super().ev_keydown(event)
-    
-    def ev_mousebuttondown(
-        self, event: tcod.event.MouseButtonDown
-    ) -> Optional[ActionOrHandler]:
-        """Don't allow the player to click to exit the menu, like normal."""
-        return None
-    
-    def on_render(self, console: tcod.Console) -> None:
-        character_creator_console = tcod.Console(console.width, console.height)
-        character_creator_console.draw_frame(0, 0, character_creator_console.width, character_creator_console.height)
-        character_creator_console.print_box(
-            0, 0, character_creator_console.width, 1, "┤Character Creation├", alignment=tcod.CENTER
-        )
-        
-        character_creator_console.print(2, 2, "Name:")
-        
-        character_creator_console.print(2, 5, "Class:")
-        for i, character_class in enumerate(settings.list_of_classes):
-            class_key = chr(ord("A") + i)
-            
-            class_string = f"[{class_key}] {character_class}"
-            
-            character_creator_console.print(3, 7+i, class_string, fg=color.menu_text)
-        character_creator_console.print(7, 7+settings.class_number, settings.player_class, fg=color.gold)
-        
-        character_creator_console.print(2, 19, "Rolling for stats:")
-        for i, text in enumerate(settings.list_of_difficulties):
-            difficulty_key = chr(ord("A") + len(settings.list_of_classes) + i)
-            
-            difficulty_string = f"[{difficulty_key}] {text}"
-            
-            character_creator_console.print(3, 21+i, difficulty_string, fg=color.menu_text)
-        character_creator_console.print(7, 21+settings.difficulty_number, settings.difficulty, fg=color.gold)
-        
-        character_creator_console.print(2, 26, "Seed:")
-        
-        if settings.player_name == "":
-            settings.player_name = render_functions.ask_for_text(x=8, y=2, console=character_creator_console)
-        else:
-            character_creator_console.print(8, 2, settings.player_name, fg=color.gold)
-        
-        # TODO: Manage the seed.
-        
-        if settings.player_name != "" and settings.player_class != "" and settings.difficulty != "":
-            character_creator_console.print(2, 29, "Confirm the above? [Y] or [N]", fg=color.menu_text)
-
-        
-        character_creator_console.blit(console, 0, 0,)

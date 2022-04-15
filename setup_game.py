@@ -10,10 +10,13 @@ from typing import Optional
 import tcod
 
 import color
+from dice_roller import dice_roller
 from engine import Engine
 import entity_factories
 from game_map import GameWorld
 import input_handlers
+import render_functions
+import settings
 
 # Load the background image and remove the alpha channel.
 background_image = tcod.image.load("menu_background.png")[:, :, :3]
@@ -42,18 +45,6 @@ def new_game() -> Engine:
     
     engine.game_world.generate_floor()
     engine.update_fov()
-    
-    dagger = copy.deepcopy(entity_factories.dagger)
-    leather_armor = copy.deepcopy(entity_factories.leather_armor)
-    
-    dagger.parent = player.inventory
-    leather_armor.parent = player.inventory
-    
-    player.inventory.items.append(dagger)
-    player.equipment.toggle_equip(dagger, add_message=False)
-    
-    player.inventory.items.append(leather_armor)
-    player.equipment.toggle_equip(leather_armor, add_message=False)
     return engine
 
 def load_game(filename: str) -> Engine:
@@ -112,6 +103,130 @@ class MainMenu(input_handlers.BaseEventHandler):
                 traceback.print_exc() # Print to stderr.
                 return input_handlers.PopupMessage(self, f"Failed to load save:\n{exc}")
         elif event.sym == tcod.event.K_n:
-            # return input_handlers.MainGameEventHandler(new_game()) 
-            return input_handlers.CharacterCreator(new_game())
+            return CharacterCreator(new_game())
         return None
+
+class CharacterCreator(input_handlers.EventHandler):    
+    def __init__(self, engine: Engine):
+        super().__init__(engine)
+        
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        key = event.sym
+        index = key - tcod.event.K_a
+        
+        if 0 <= index < len(settings.list_of_classes) and settings.player_class == "":
+            # Detecting the keypress that selects the player's class.
+            settings.class_number = index
+            settings.player_class = settings.list_of_classes[settings.class_number]
+        elif len(settings.list_of_classes) <= index < len(settings.list_of_classes)+len(settings.list_of_difficulties) and settings.difficulty == "":
+            # Detecting the keypress that selects the player's difficulty level. 
+            # Offset by the number of classes so that alphabetically it picks up where the last list left off.
+            settings.difficulty_number = index - len(settings.list_of_classes)
+            settings.difficulty = settings.list_of_difficulties[settings.difficulty_number]
+        elif(
+            key == tcod.event.K_n 
+            and settings.player_name != "" 
+            and settings.player_class != "" 
+            and settings.difficulty != ""
+        ):
+            # The player has entered their details but then selected "[N]" when asked to confirm their choices.
+            settings.player_name = ""
+            settings.player_class = ""
+            settings.class_number = -1
+            settings.difficulty = ""
+            settings.difficulty_number = -1
+        elif(
+            key == tcod.event.K_y
+            and settings.player_name != "" 
+            and settings.player_class != "" 
+            and settings.difficulty != ""
+        ):
+            # The player has entered their details and selected "[Y]" when asked to confirm their choices.
+            self.engine.message_log.add_message(
+                f"Hello and welcome, {settings.player_name}, to the dungeon.", color.welcome_text
+            )
+            
+            # Rolling for stats.
+            if settings.difficulty == "Extreme (Easy)":
+                self.engine.player.charisma = dice_roller(3,20,1)
+                self.engine.player.constitution = dice_roller(3,20,1)
+                self.engine.player.dexterity = dice_roller(3,20,1)
+                self.engine.player.intelligence = dice_roller(3,20,1)
+                self.engine.player.strength = dice_roller(3,20,1)
+                self.engine.player.wisdom = dice_roller(3,20,1)
+            elif settings.difficulty == "Standard (Medium)":
+                self.engine.player.charisma = dice_roller(3,10,2)
+                self.engine.player.constitution = dice_roller(3,10,2)
+                self.engine.player.dexterity = dice_roller(3,10,2)
+                self.engine.player.intelligence = dice_roller(3,10,2)
+                self.engine.player.strength = dice_roller(3,10,2)
+                self.engine.player.wisdom = dice_roller(3,10,2)
+            elif settings.difficulty == "Classic (Hard)":
+                self.engine.player.charisma = dice_roller(3,6,3)
+                self.engine.player.constitution = dice_roller(3,6,3)
+                self.engine.player.dexterity = dice_roller(3,6,3)
+                self.engine.player.intelligence = dice_roller(3,6,3)
+                self.engine.player.strength = dice_roller(3,6,3)
+                self.engine.player.wisdom = dice_roller(3,6,3)
+
+            # Adding items to inventory.
+            starting_gold = dice_roller(3,6,3)*10
+            gold = copy.deepcopy(entity_factories.gold)
+            gold.stack = starting_gold
+            gold.parent = self.engine.player.inventory
+            self.engine.player.inventory.items.append(gold)
+            
+            dagger = copy.deepcopy(entity_factories.dagger)
+            dagger.parent = self.engine.player.inventory
+            self.engine.player.inventory.items.append(dagger)
+            self.engine.player.equipment.toggle_equip(dagger, add_message=False)
+            
+            leather_armor = copy.deepcopy(entity_factories.leather_armor)
+            leather_armor.parent = self.engine.player.inventory
+            self.engine.player.inventory.items.append(leather_armor)
+            self.engine.player.equipment.toggle_equip(leather_armor, add_message=False)
+            
+            return input_handlers.MainGameEventHandler(self.engine) 
+        return super().ev_keydown(event)
+    
+    def on_render(self, console: tcod.Console) -> None:
+        character_creator_console = tcod.Console(console.width, console.height)
+        character_creator_console.draw_frame(0, 0, character_creator_console.width, character_creator_console.height)
+        character_creator_console.print_box(
+            0, 0, character_creator_console.width, 1, "┤Character Creation├", alignment=tcod.CENTER
+        )
+        
+        character_creator_console.print(2, 2, "Name:")
+        
+        character_creator_console.print(2, 5, "Class:")
+        for i, character_class in enumerate(settings.list_of_classes):
+            class_key = chr(ord("A") + i)
+            
+            class_string = f"[{class_key}] {character_class}"
+            
+            character_creator_console.print(3, 7+i, class_string, fg=color.menu_text)
+        character_creator_console.print(7, 7+settings.class_number, settings.player_class, fg=color.gold)
+        
+        character_creator_console.print(2, 19, "Rolling for stats:")
+        for i, text in enumerate(settings.list_of_difficulties):
+            difficulty_key = chr(ord("A") + len(settings.list_of_classes) + i)
+            
+            difficulty_string = f"[{difficulty_key}] {text}"
+            
+            character_creator_console.print(3, 21+i, difficulty_string, fg=color.menu_text)
+        character_creator_console.print(7, 21+settings.difficulty_number, settings.difficulty, fg=color.gold)
+        
+        character_creator_console.print(2, 26, "Seed:")
+        
+        if settings.player_name == "":
+            settings.player_name = render_functions.ask_for_text(x=8, y=2, console=character_creator_console)
+        else:
+            character_creator_console.print(8, 2, settings.player_name, fg=color.gold)
+        
+        # TODO: Manage the seed.
+        
+        if settings.player_name != "" and settings.player_class != "" and settings.difficulty != "":
+            character_creator_console.print(2, 29, "Confirm the above? [Y] or [N]", fg=color.menu_text)
+
+        
+        character_creator_console.blit(console, 0, 0,)

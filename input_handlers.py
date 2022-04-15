@@ -14,6 +14,7 @@ from actions import (
     WaitAction
 )
 import color
+from dice_roller import dice_roller
 import exceptions
 import render_functions 
 import settings
@@ -211,22 +212,22 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x + 1, y=y + 2, string=f"Class: {settings.player_class} {self.engine.player.level.current_level}"
         )
         console.print(
-            x=x + 1, y=y + 3, string=f"Charisma: "
+            x=x + 1, y=y + 3, string=f"Charisma: {self.engine.player.charisma}"
         )
         console.print(
-            x=x + 1, y=y + 4, string=f"Constitution: "
+            x=x + 1, y=y + 4, string=f"Constitution: {self.engine.player.constitution}"
         )
         console.print(
-            x=x + 1, y=y + 5, string=f"Dexterity: "
+            x=x + 1, y=y + 5, string=f"Dexterity: {self.engine.player.dexterity}"
         )
         console.print(
-            x=x + 1, y=y + 6, string=f"Intelligence: "
+            x=x + 1, y=y + 6, string=f"Intelligence: {self.engine.player.intelligence}"
         )
         console.print(
-            x=x + 1, y=y + 7, string=f"Strength: "
+            x=x + 1, y=y + 7, string=f"Strength: {self.engine.player.strength}"
         )
         console.print(
-            x=x + 1, y=y + 8, string=f"Wisdom: "
+            x=x + 1, y=y + 8, string=f"Wisdom: {self.engine.player.wisdom}"
         )
         console.print(
             x=x + 1, y=y + 9, string=f"Attack value: {self.engine.player.fighter.power}"
@@ -655,6 +656,30 @@ class CharacterCreator(EventHandler):
             self.engine.message_log.add_message(
                 f"Hello and welcome, {settings.player_name}, to the dungeon.", color.welcome_text
             )
+            
+            # Rolling for stats.
+            if settings.difficulty_number == 0: # Extreme (Easy)
+                self.engine.player.charisma = dice_roller(3,20,1)
+                self.engine.player.constitution = dice_roller(3,20,1)
+                self.engine.player.dexterity = dice_roller(3,20,1)
+                self.engine.player.intelligence = dice_roller(3,20,1)
+                self.engine.player.strength = dice_roller(3,20,1)
+                self.engine.player.wisdom = dice_roller(3,20,1)
+            elif settings.difficulty_number == 1: # Standard (Medium)
+                self.engine.player.charisma = dice_roller(3,10,2)
+                self.engine.player.constitution = dice_roller(3,10,2)
+                self.engine.player.dexterity = dice_roller(3,10,2)
+                self.engine.player.intelligence = dice_roller(3,10,2)
+                self.engine.player.strength = dice_roller(3,10,2)
+                self.engine.player.wisdom = dice_roller(3,10,2)
+            elif settings.difficulty_number == 2: # Classic (Hard)
+                self.engine.player.charisma = dice_roller(3,6,3)
+                self.engine.player.constitution = dice_roller(3,6,3)
+                self.engine.player.dexterity = dice_roller(3,6,3)
+                self.engine.player.intelligence = dice_roller(3,6,3)
+                self.engine.player.strength = dice_roller(3,6,3)
+                self.engine.player.wisdom = dice_roller(3,6,3)
+            
             return MainGameEventHandler(self.engine) 
         return super().ev_keydown(event)
     

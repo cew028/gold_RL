@@ -197,7 +197,7 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x,
             y=y,
             width=width,
-            height=7,
+            height=14,
             title=self.TITLE,
             clear=True,
             fg=(255, 255, 255),
@@ -205,21 +205,42 @@ class CharacterScreenEventHandler(AskUserEventHandler):
         )
         
         console.print(
-            x=x + 1, y=y + 1, string=f"Level: {self.engine.player.level.current_level}"
+            x=x+1, y=y + 1, string=f"Name: {settings.player_name}"
         )
         console.print(
-            x=x + 1, y=y + 2, string=f"XP: {self.engine.player.level.current_xp}"
+            x=x + 1, y=y + 2, string=f"Class: {settings.player_class} {self.engine.player.level.current_level}"
+        )
+        console.print(
+            x=x + 1, y=y + 3, string=f"Charisma: "
+        )
+        console.print(
+            x=x + 1, y=y + 4, string=f"Constitution: "
+        )
+        console.print(
+            x=x + 1, y=y + 5, string=f"Dexterity: "
+        )
+        console.print(
+            x=x + 1, y=y + 6, string=f"Intelligence: "
+        )
+        console.print(
+            x=x + 1, y=y + 7, string=f"Strength: "
+        )
+        console.print(
+            x=x + 1, y=y + 8, string=f"Wisdom: "
+        )
+        console.print(
+            x=x + 1, y=y + 9, string=f"Attack value: {self.engine.player.fighter.power}"
+        )
+        console.print(
+            x=x + 1, y=y + 10, string=f"Armor class: {self.engine.player.fighter.defense}"
+        )
+        console.print(
+            x=x + 1, y=y + 11, string=f"XP: {self.engine.player.level.current_xp}"
         )
         console.print(
             x=x + 1,
-            y=y + 3,
+            y=y + 12,
             string=f"XP for next level: {self.engine.player.level.experience_to_next_level}",
-        )
-        console.print(
-            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power}"
-        )
-        console.print(
-            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
         )
 
 class LevelUpEventHandler(AskUserEventHandler):

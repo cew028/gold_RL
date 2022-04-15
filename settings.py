@@ -32,3 +32,10 @@ list_of_classes = [
 ]
 player_class = ""
 class_number = -1
+list_of_difficulties = [
+    "Extreme (Easy)",
+    "Standard (Medium)",
+    "Classic (Hard)"
+]
+difficulty = ""
+difficulty_number = -1

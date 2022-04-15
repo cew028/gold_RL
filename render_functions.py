@@ -68,7 +68,7 @@ def ask_for_text(x: int, y: int, console: tcod.Console) -> str:
             if isinstance(event, tcod.event.TextInput):
                 buffer += event.text
             elif isinstance(event, tcod.event.KeyDown):
-                if event.sym in {\
+                if event.sym in {
                     tcod.event.KeySym.KP_ENTER, tcod.event.KeySym.RETURN, tcod.event.KeySym.RETURN2
                 }:
                     return buffer

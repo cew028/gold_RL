@@ -2,6 +2,7 @@ import color
 import settings
 
 from components.ai import HostileEnemy
+from components.character_class import CharacterClass
 from components import consumable, equippable
 from components.equipment import Equipment
 from components.fighter import Fighter
@@ -14,13 +15,14 @@ from entity import Actor, Item
 player = Actor(
     char="@",
     color=(255, 255, 255),
-    name="Player",
+    name="Unnamed Player",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
     fighter=Fighter(hp=30, base_defense=1, base_power=2),
     inventory=Inventory(capacity=26),
     level=Level(level_up_base=200),
-    stats=Stats(),  
+    stats=Stats(),
+    character_class=CharacterClass(),
 )
 
 orc = Actor(
@@ -33,6 +35,7 @@ orc = Actor(
     inventory=Inventory(capacity=0),
     level=Level(xp_given=35),
     stats=Stats(),
+    character_class=CharacterClass(),
 )
 
 troll = Actor(
@@ -45,6 +48,7 @@ troll = Actor(
     inventory=Inventory(capacity=0),
     level=Level(xp_given=100),
     stats=Stats(),
+    character_class=CharacterClass(),
 )
 
 gold = Item(

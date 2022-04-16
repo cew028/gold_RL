@@ -39,7 +39,7 @@ class Engine:
             (self.player.x, self.player.y),
             radius = 8,
         )
-        # If a tile is "visible" it should be added to explored".
+        # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible
     
     def render(self, console: Console) -> None:

@@ -197,7 +197,7 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x,
             y=y,
             width=width,
-            height=14,
+            height=15, # Two more than the last y-position in the frame.
             title=self.TITLE,
             clear=True,
             fg=(255, 255, 255),
@@ -205,42 +205,69 @@ class CharacterScreenEventHandler(AskUserEventHandler):
         )
         
         console.print(
-            x=x+1, y=y + 1, string=f"Name: {settings.player_name}"
+            x=x+1, 
+            y=y + 1, 
+            string=f"Name: {self.engine.player.name}"
         )
         console.print(
-            x=x + 1, y=y + 2, string=f"Class: {settings.player_class} {self.engine.player.level.current_level}"
+            x=x + 1, 
+            y=y + 2, 
+            string=f"Class: {self.engine.player.character_class} {self.engine.player.level.current_level}"
         )
         console.print(
-            x=x + 1, y=y + 3, string=f"Charisma: {self.engine.player.charisma}"
+            x=x + 1, 
+            y=y + 3, 
+            string=f"Charisma: {self.engine.player.charisma}"
         )
         console.print(
-            x=x + 1, y=y + 4, string=f"Constitution: {self.engine.player.constitution}"
+            x=x + 1, 
+            y=y + 4, 
+            string=f"Constitution: {self.engine.player.constitution}"
         )
         console.print(
-            x=x + 1, y=y + 5, string=f"Dexterity: {self.engine.player.dexterity}"
+            x=x + 1, 
+            y=y + 5, 
+            string=f"Dexterity: {self.engine.player.dexterity}"
         )
         console.print(
-            x=x + 1, y=y + 6, string=f"Intelligence: {self.engine.player.intelligence}"
+            x=x + 1, 
+            y=y + 6, 
+            string=f"Intelligence: {self.engine.player.intelligence}"
         )
         console.print(
-            x=x + 1, y=y + 7, string=f"Strength: {self.engine.player.strength}"
+            x=x + 1, 
+            y=y + 7, 
+            string=f"Strength: {self.engine.player.strength}"
         )
         console.print(
-            x=x + 1, y=y + 8, string=f"Wisdom: {self.engine.player.wisdom}"
+            x=x + 1, 
+            y=y + 8, 
+            string=f"Wisdom: {self.engine.player.wisdom}"
         )
         console.print(
-            x=x + 1, y=y + 9, string=f"Attack value: {self.engine.player.fighter.power}"
+            x=x + 1, 
+            y=y + 9, 
+            string=f"Attack value: {self.engine.player.fighter.power}"
         )
         console.print(
-            x=x + 1, y=y + 10, string=f"Armor class: {self.engine.player.fighter.defense}"
+            x=x + 1, 
+            y=y + 10, 
+            string=f"Armor class: {self.engine.player.fighter.defense}"
         )
         console.print(
-            x=x + 1, y=y + 11, string=f"XP: {self.engine.player.level.current_xp}"
+            x=x + 1, 
+            y=y + 11, 
+            string=f"XP: {self.engine.player.level.current_xp}"
         )
         console.print(
             x=x + 1,
             y=y + 12,
             string=f"XP for next level: {self.engine.player.level.experience_to_next_level}",
+        )
+        console.print(
+            x=x + 1,
+            y=y + 13,
+            string=f"World seed: {settings.seed}",
         )
 
 class LevelUpEventHandler(AskUserEventHandler):

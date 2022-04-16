@@ -32,6 +32,8 @@ def new_game() -> Engine:
     max_rooms = 30
     
     player = copy.deepcopy(entity_factories.player)
+    player.name = settings.player_name
+    player.character_class = settings.player_class
     
     engine = Engine(player=player)
     
@@ -48,7 +50,7 @@ def new_game() -> Engine:
     engine.update_fov()
     
     engine.message_log.add_message(
-        f"Hello and welcome, {settings.player_name}, to the dungeon.", color.welcome_text
+        f"Hello and welcome, {player.name}, to the dungeon.", color.welcome_text
     )
     
     # Rolling for stats.

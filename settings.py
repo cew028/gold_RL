@@ -1,5 +1,8 @@
 import tcod
 
+# The seed
+seed = ""
+
 # The context (as I understand it, the window)
 screen_width = 80
 screen_height = 50

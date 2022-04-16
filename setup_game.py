@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import lzma
 import pickle
+import random
 import traceback
 from typing import Optional
 
@@ -45,6 +46,56 @@ def new_game() -> Engine:
     
     engine.game_world.generate_floor()
     engine.update_fov()
+    
+    engine.message_log.add_message(
+        f"Hello and welcome, {settings.player_name}, to the dungeon.", color.welcome_text
+    )
+    
+    # Rolling for stats.
+    if settings.difficulty == "Extreme (Easy)":
+        # Extreme generates stats via 3d20k1.
+        engine.player.charisma = dice_roller(3,20,1)
+        engine.player.constitution = dice_roller(3,20,1)
+        engine.player.dexterity = dice_roller(3,20,1)
+        engine.player.intelligence = dice_roller(3,20,1)
+        engine.player.strength = dice_roller(3,20,1)
+        engine.player.wisdom = dice_roller(3,20,1)
+    elif settings.difficulty == "Standard (Medium)":
+        # Standard generates stats via 3d10k2.
+        engine.player.charisma = dice_roller(3,10,2)
+        engine.player.constitution = dice_roller(3,10,2)
+        engine.player.dexterity = dice_roller(3,10,2)
+        engine.player.intelligence = dice_roller(3,10,2)
+        engine.player.strength = dice_roller(3,10,2)
+        engine.player.wisdom = dice_roller(3,10,2)
+    elif settings.difficulty == "Classic (Hard)":
+        # Classic generates stats via 3d6.
+        engine.player.charisma = dice_roller(3,6,3)
+        engine.player.constitution = dice_roller(3,6,3)
+        engine.player.dexterity = dice_roller(3,6,3)
+        engine.player.intelligence = dice_roller(3,6,3)
+        engine.player.strength = dice_roller(3,6,3)
+        engine.player.wisdom = dice_roller(3,6,3)
+
+    # Adding items to inventory.    
+    # Gold:
+    starting_gold = dice_roller(3,6,3)*10
+    gold = copy.deepcopy(entity_factories.gold)
+    gold.stack = starting_gold
+    gold.parent = engine.player.inventory
+    engine.player.inventory.items.append(gold)
+    
+    # Starting weapon:
+    dagger = copy.deepcopy(entity_factories.dagger)
+    dagger.parent = engine.player.inventory
+    engine.player.inventory.items.append(dagger)
+    engine.player.equipment.toggle_equip(dagger, add_message=False)
+    
+    # Starting armor:
+    leather_armor = copy.deepcopy(entity_factories.leather_armor)
+    leather_armor.parent = engine.player.inventory
+    engine.player.inventory.items.append(leather_armor)
+    engine.player.equipment.toggle_equip(leather_armor, add_message=False)
     return engine
 
 def load_game(filename: str) -> Engine:
@@ -103,13 +154,11 @@ class MainMenu(input_handlers.BaseEventHandler):
                 traceback.print_exc() # Print to stderr.
                 return input_handlers.PopupMessage(self, f"Failed to load save:\n{exc}")
         elif event.sym == tcod.event.K_n:
-            return CharacterCreator(new_game())
+            return CharacterCreator()
         return None
 
-class CharacterCreator(input_handlers.EventHandler):    
-    def __init__(self, engine: Engine):
-        super().__init__(engine)
-        
+class CharacterCreator(input_handlers.BaseEventHandler):
+    """Handle the character creation (name, class, difficulty, world seed) rendering and input."""
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         key = event.sym
         index = key - tcod.event.K_a
@@ -128,105 +177,75 @@ class CharacterCreator(input_handlers.EventHandler):
             and settings.player_name != "" 
             and settings.player_class != "" 
             and settings.difficulty != ""
+            and settings.seed != ""
         ):
             # The player has entered their details but then selected "[N]" when asked to confirm their choices.
+            # This resets all the choices back to the default and the player must select again.
             settings.player_name = ""
             settings.player_class = ""
             settings.class_number = -1
             settings.difficulty = ""
             settings.difficulty_number = -1
+            settings.seed = ""
         elif(
             key == tcod.event.K_y
             and settings.player_name != "" 
             and settings.player_class != "" 
             and settings.difficulty != ""
+            and settings.seed != ""
         ):
             # The player has entered their details and selected "[Y]" when asked to confirm their choices.
-            self.engine.message_log.add_message(
-                f"Hello and welcome, {settings.player_name}, to the dungeon.", color.welcome_text
-            )
-            
-            # Rolling for stats.
-            if settings.difficulty == "Extreme (Easy)":
-                self.engine.player.charisma = dice_roller(3,20,1)
-                self.engine.player.constitution = dice_roller(3,20,1)
-                self.engine.player.dexterity = dice_roller(3,20,1)
-                self.engine.player.intelligence = dice_roller(3,20,1)
-                self.engine.player.strength = dice_roller(3,20,1)
-                self.engine.player.wisdom = dice_roller(3,20,1)
-            elif settings.difficulty == "Standard (Medium)":
-                self.engine.player.charisma = dice_roller(3,10,2)
-                self.engine.player.constitution = dice_roller(3,10,2)
-                self.engine.player.dexterity = dice_roller(3,10,2)
-                self.engine.player.intelligence = dice_roller(3,10,2)
-                self.engine.player.strength = dice_roller(3,10,2)
-                self.engine.player.wisdom = dice_roller(3,10,2)
-            elif settings.difficulty == "Classic (Hard)":
-                self.engine.player.charisma = dice_roller(3,6,3)
-                self.engine.player.constitution = dice_roller(3,6,3)
-                self.engine.player.dexterity = dice_roller(3,6,3)
-                self.engine.player.intelligence = dice_roller(3,6,3)
-                self.engine.player.strength = dice_roller(3,6,3)
-                self.engine.player.wisdom = dice_roller(3,6,3)
-
-            # Adding items to inventory.
-            starting_gold = dice_roller(3,6,3)*10
-            gold = copy.deepcopy(entity_factories.gold)
-            gold.stack = starting_gold
-            gold.parent = self.engine.player.inventory
-            self.engine.player.inventory.items.append(gold)
-            
-            dagger = copy.deepcopy(entity_factories.dagger)
-            dagger.parent = self.engine.player.inventory
-            self.engine.player.inventory.items.append(dagger)
-            self.engine.player.equipment.toggle_equip(dagger, add_message=False)
-            
-            leather_armor = copy.deepcopy(entity_factories.leather_armor)
-            leather_armor.parent = self.engine.player.inventory
-            self.engine.player.inventory.items.append(leather_armor)
-            self.engine.player.equipment.toggle_equip(leather_armor, add_message=False)
-            
-            return input_handlers.MainGameEventHandler(self.engine) 
-        return super().ev_keydown(event)
+            # This generates the game.
+            return input_handlers.MainGameEventHandler(new_game()) 
+        return None
     
     def on_render(self, console: tcod.Console) -> None:
-        character_creator_console = tcod.Console(console.width, console.height)
-        character_creator_console.draw_frame(0, 0, character_creator_console.width, character_creator_console.height)
-        character_creator_console.print_box(
-            0, 0, character_creator_console.width, 1, "┤Character Creation├", alignment=tcod.CENTER
+        # First, draw a window-sized border.
+        console.draw_frame(0, 0, console.width, console.height)
+        console.print_box(
+            0, 0, console.width, 1, "┤Character Creation├", alignment=tcod.CENTER
         )
         
-        character_creator_console.print(2, 2, "Name:")
+        console.print(2, 2, "Name:")
         
-        character_creator_console.print(2, 5, "Class:")
+        console.print(2, 5, "Class:")
         for i, character_class in enumerate(settings.list_of_classes):
+            # Draw "[letter] character_class" for each class in list_of_classes.
+            # This is maleable to more or fewer classes (though for now there's just 10 classes.)
             class_key = chr(ord("A") + i)
             
             class_string = f"[{class_key}] {character_class}"
             
-            character_creator_console.print(3, 7+i, class_string, fg=color.menu_text)
-        character_creator_console.print(7, 7+settings.class_number, settings.player_class, fg=color.gold)
+            console.print(3, 7+i, class_string, fg=color.menu_text)
+        console.print(7, 7+settings.class_number, settings.player_class, fg=color.gold) # When the class has been chosen, this highlights it gold.
         
-        character_creator_console.print(2, 19, "Rolling for stats:")
+        console.print(2, 19, "Rolling for stats:")
         for i, text in enumerate(settings.list_of_difficulties):
+            # Draw "[letter] difficulty" for each choice in list_of_difficulties.
+            # The letters start where they left off from the list_of_classes above.
+            # Like above, this is flexible for having more or fewer difficulty settings.
             difficulty_key = chr(ord("A") + len(settings.list_of_classes) + i)
             
             difficulty_string = f"[{difficulty_key}] {text}"
             
-            character_creator_console.print(3, 21+i, difficulty_string, fg=color.menu_text)
-        character_creator_console.print(7, 21+settings.difficulty_number, settings.difficulty, fg=color.gold)
-        
-        character_creator_console.print(2, 26, "Seed:")
+            console.print(3, 21+i, difficulty_string, fg=color.menu_text)
+        console.print(7, 21+settings.difficulty_number, settings.difficulty, fg=color.gold) # When the difficulty has been chosen, this highlights it gold.
         
         if settings.player_name == "":
-            settings.player_name = render_functions.ask_for_text(x=8, y=2, console=character_creator_console)
+            settings.player_name = render_functions.ask_for_text(x=8, y=2, console=console)
         else:
-            character_creator_console.print(8, 2, settings.player_name, fg=color.gold)
+            console.print(8, 2, settings.player_name, fg=color.gold) # When the name has been entered, this highlights it gold.
         
-        # TODO: Manage the seed.
+        if settings.player_class != "" and settings.difficulty != "":
+            console.print(2, 26, "Seed:")
+            if settings.seed == "":
+                settings.seed = render_functions.ask_for_text(x=8, y=26, console=console)
+            else:
+                console.print(8, 26, settings.seed, fg=color.gold) # When the seed has been entered, this highlights it gold.
+        
+        random.seed(settings.seed) 
         
         if settings.player_name != "" and settings.player_class != "" and settings.difficulty != "":
-            character_creator_console.print(2, 29, "Confirm the above? [Y] or [N]", fg=color.menu_text)
+            console.print(2, 29, "Confirm the above? [Y] or [N]", fg=color.menu_text)
 
-        
-        character_creator_console.blit(console, 0, 0,)
+        console.blit(console, 0, 0,)

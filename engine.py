@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import lzma
 import pickle
+import random
 from typing import TYPE_CHECKING
 
 from tcod.console import Console
@@ -10,6 +11,7 @@ from tcod.map import compute_fov
 import exceptions
 from message_log import MessageLog
 import render_functions
+import settings
 
 if TYPE_CHECKING:
     from entity import Actor
@@ -23,6 +25,8 @@ class Engine:
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         self.player = player
+        self.world_seed = settings.seed
+        self.seed_state = None
     
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
@@ -66,6 +70,7 @@ class Engine:
     
     def save_as(self, filename: str) -> None:
         """Save this Engine instance as a compressed file."""
+        self.seed_state = random.getstate() # This saves the current seed state of the RNG so that it is preserved via saving and loading.
         save_data = lzma.compress(pickle.dumps(self))
         with open(filename, "wb") as f:
             f.write(save_data)

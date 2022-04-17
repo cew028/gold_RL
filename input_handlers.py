@@ -267,8 +267,13 @@ class CharacterScreenEventHandler(AskUserEventHandler):
         console.print(
             x=x + 1,
             y=y + 13,
-            string=f"World seed: {settings.seed}",
+            string=f"World seed: {self.engine.world_seed}",
         )
+        # console.print(
+            # x=x + 1,
+            # y=y + 14,
+            # string=f"Current seed state: {self.engine.seed_state}", # For debugging purposes, uncomment this command to see the current RNG seed state.
+        # )
 
 class LevelUpEventHandler(AskUserEventHandler):
     TITLE = "Level Up"

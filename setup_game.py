@@ -105,6 +105,7 @@ def load_game(filename: str) -> Engine:
     with open(filename, "rb") as f:
         engine = pickle.loads(lzma.decompress(f.read()))
     assert isinstance(engine, Engine)
+    random.setstate(engine.seed_state) # This loads the seed state of the RNG which was saved before quitting.
     return engine
 
 class MainMenu(input_handlers.BaseEventHandler):
